@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { catchErrors, prepareQuery } = require('./services/query.service');
+const { catchExceptions, prepareQuery } = require('./services/query.service');
 
 const testJSON = [
     { id: 1, realName: 'Pahom', nickname: 'Poehavshiy' },
@@ -11,10 +11,10 @@ const testJSON = [
 
 module.exports = Router()
     .get('/', (_, res) => res.json({ message: 'Hello Bratok!' }))
-    .get('/test', ...catchErrors(({ query }, res) => {
+    .get('/test', ...catchExceptions(({ query }, res) => {
         query = prepareQuery(query)
         console.log(query);
         if (query.msg !== 'hi') 
-            throw { status: 400, error: "You didn't say hi!" };
+            res.json({ status: 400, error: "You didn't say hi!" });
         res.json({ message: 'Hi, mate.' })
     }))
