@@ -1,1 +1,1 @@
-GET http://localhost:777/rest/signup
+GET http://localhost:777/rest/test?msg=hi

@@ -1,6 +1,7 @@
-module.exports = middleware => (_, res, __) => {
+module.exports = middleware => (req, res, next) => {
     try {
-        middleware(_, res, __)
+        const payload = middleware(req, res, next);
+        res.status(payload.status || 200).json(payload)
     } catch (error) {
         if (typeof error !== 'object' 
         || error.constructor !== Object 
