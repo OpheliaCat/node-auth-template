@@ -10,7 +10,7 @@ const testJSON = [
 ]
 
 module.exports = Router()
-    .get('/', (_, res) => res.json({ message: 'Hello Bratok!' }))
+    .get('/', ({ headers: { authorization }}, res) => res.json({ message: 'Hello Bratok!' }))
     .get('/test', ...catchExceptions(({ query }, res) => {
         query = prepareQuery(query)
         console.log(query);

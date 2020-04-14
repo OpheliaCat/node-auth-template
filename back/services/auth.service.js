@@ -30,7 +30,7 @@ module.exports = {
     },
     
     verifyJWT: token => {
-        const { header, payload, signature } = token
+        const [ header, payload, signature ] = token
             .replace('Bearer', '')
             .trim()
             .split('.');
