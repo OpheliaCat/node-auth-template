@@ -3,20 +3,6 @@ const AJV = require('ajv');
 const ajv = new AJV();
 
 module.exports = {
-    catchExceptions: (...middlewares) => middlewares.map(
-        middleware => (req, res, next) => {
-            try {
-                middleware(req, res, next)
-            } catch (error) {
-                console.log('ERROR', error);
-                res.status(500).json({ 
-                    status: 500,
-                    error: 'It is a problem on a server side. Please contact an admin.'
-                })
-            }
-        }
-    ),
-
     validateBody: schema => async ({ body }, res, next) => {
         const isValid = await ajv.validate(schema, body);
         if (!isValid) res.status(400).json({ status: 400, errors: ajv.errors })
