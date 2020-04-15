@@ -1,5 +1,6 @@
 const { Router } = require('express');
-const { makeMiddlewares } = require('./adapters/express.adapter')
+const expressAdapter = require('./adapters/express.adapter')
+
 
 const testJSON = [
     { id: 1, realName: 'Pahom', nickname: 'Poehavshiy' },
@@ -9,7 +10,13 @@ const testJSON = [
     { id: 5, realName: 'Baskova', nickname: null }
 ]
 
-module.exports = Router()
-    .get('/test', ...makeMiddlewares(
-        ({ query }) => ({ json: testJSON.concat(query) })
-    ))
+module.exports = expressAdapter(Router())
+    .addRoute(
+        { method: 'GET', path: '/test' },
+        ({ query }) => ({ json: testJSON.concat(query )})
+    )
+    .addRoute(
+        { method: 'POST', path: '/post' },
+        ({ body }) => ({ status: 201, json: testJSON.concat(body) })
+    )
+    .router

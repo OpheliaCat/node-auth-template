@@ -1,1 +1,1 @@
-GET http://localhost:777/rest/test?msg=hi&limit=10&fields=id,realName
+POST http://localhost:777/rest/post?msg=hi&limit=10&fields=id,realName
