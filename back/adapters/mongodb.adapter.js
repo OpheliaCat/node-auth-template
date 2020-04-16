@@ -17,8 +17,6 @@ module.exports = Object.freeze({
     
     async connect () {
         this.client = await MongoClient.connect(process.env.MONGO_URI);
-        const db = await MongoClient.connect(process.env.MONGO_URI)
-        db.db().collection().findOneAndUpdate()
         this.db = this.client.db()
     },
     
