@@ -3,9 +3,9 @@ module.exports = router => Object.freeze({
 
     addRoute: function ({ method, path }, ...handlers) {
         const middlewares = handlers.map(
-            handler => (req, res, next) => {
+            handler => async (req, res, next) => {
                 try {
-                    const output = handler(req);
+                    const output = await handler(req);
                     if (typeof output !== 'object') return next();
                     const { status, json, text } = output;
                     res.status(Number(status) || 200);
