@@ -13,10 +13,10 @@ const testJSON = [
 module.exports = expressAdapter(Router())
     .addRoute(
         { method: 'GET', path: '/test' },
-        ({ query }) => ({ json: testJSON.concat(query )})
+        ({ query }) => ({ json: [...testJSON, query]})
     )
     .addRoute(
         { method: 'POST', path: '/post' },
-        ({ body }) => ({ status: 201, json: testJSON.concat(body) })
+        ({ body }) => ({ status: 201, json: [...testJSON, body]})
     )
     .router
