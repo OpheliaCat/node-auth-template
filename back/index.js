@@ -1,14 +1,13 @@
-const express = require('express');
+const mongodbAdapter = require('./adapters/mongodb.adapter');
+const server = require('./server');
 
-const routes = require('./routes');
-
-const app = express()
-    .use((_, res, next) => {
-        res.header("Access-Control-Allow-Origin", "*");
-        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-        next()
-    })
-    .use(express.urlencoded({ extended: true }))
-    .use(express.json())
-    .use('/rest', routes)
-    .listen(777, () => console.log("Waiting for request..."))
+(async () => {
+    try {
+        await mongodbAdapter().connect();
+        const port = process.env.PORT || 777;
+        server.listen(port, () => console.log('Server runs on port %s...', port))
+    } catch (error) {
+        console.log(error);
+        process.exit(0);
+    }  
+})()

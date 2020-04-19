@@ -14,11 +14,11 @@ module.exports = () => Object.freeze({
     
     async connect () {
         this.client = await MongoClient.connect(process.env.MONGO_URI);
-        this.db = this.client.db()
+        this.db = this.client.db();
     },
 
-    async createCollection (collection) {
-        const collection = this.db.collection(collection);
+    async createCollection (name) {
+        const collection = this.db.collection(name);
         await collection.createIndex({ deleted: 1 });
         
         return Object.freeze({
