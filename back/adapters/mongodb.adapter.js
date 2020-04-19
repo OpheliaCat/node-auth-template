@@ -37,12 +37,12 @@ module.exports = () => Object.freeze({
             async list ({ limit, offset, sort, exclude, where }) {
                 const pipeline = [
                     { $match: { deleted: false }},
-                    { $skip: parseInt(offset) || 0 },
+                    { $skip: parseInt(offset, 10) || 0 },
                     { $limit: Math.min(parseInt(limit, 10) || 50, 50) }
                 ];
                 if (where) pipeline.push({ $match: where });
                 if (sort) pipeline.push({ $sort: sort });
-                if (exclude) pipeline.push({ $project: parseProjection(exclude) })
+                if (exclude) pipeline.push({ $project: parseProjection(exclude) });
                 return collection
                     .aggregate(pipeline)
                     .toArray()
