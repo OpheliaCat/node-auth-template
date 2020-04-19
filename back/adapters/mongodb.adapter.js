@@ -1,7 +1,4 @@
 const { MongoClient } = require('mongodb');
-const AJV = require('ajv');
-
-const ajv = AJV({ messages });
 
 const parseProjection = exclude => {
     const outputFormat = {};
@@ -11,7 +8,7 @@ const parseProjection = exclude => {
     return outputFormat
 }
 
-module.exports = Object.freeze({
+module.exports = () => Object.freeze({
     client: null,
     db: null, 
     
@@ -19,78 +16,52 @@ module.exports = Object.freeze({
         this.client = await MongoClient.connect(process.env.MONGO_URI);
         this.db = this.client.db()
     },
+
+    async createCollection (collection) {
+        const collection = this.db.collection(collection);
+        await collection.createIndex({ deleted: 1 });
+        
+        return Object.freeze({
+            list ({ limit, offset, sort, exclude, where = {} }) {
+                return collection.aggregate([
+                    { $match: { deleted: false }},
+                    { $skip: parseInt(offset) || 0 },
+                    { $limit: Math.min(parseInt(limit, 10) || 50, 50) },
+                    { $match: where },
+                    { $sort: sort },
+                    { $project: parseProjection(exclude) }
+                ])
+            },
     
-    async list (collection, { limit, offset, exclude, where = {} }) {
-        const list = await this.db
-            .collection(collection)
-            .find(
-                { ...where, 'metadata.deleted': false }, 
-                parseProjection(exclude)
-            )
-            .limit(Math.min(parseInt(limit, 10) || 50, 50))
-            .skip(parseInt(offset) || 0)
-            .toArray();
-        return { status: 200, json: list }
-    },
-
-    async get (collection, { exclude, where = {} }) {
-        const document = await this.db
-            .collection(collection)
-            .findOne(
-                { ...where, 'metadata.deleted': false }, 
-                parseProjection(exclude)
-            );
-        return { status: 200, json: document }
-    },
-    
-    async add (collection, { schema, document }) {
-        const isValid = await ajv.validate(schema, document);
-        if (!isValid) return { status: 400, json: ajv.errors };
-        const metadata = {  
-            createdAt: Date(), 
-            updatedAt: Date(), 
-            deleted: false 
-        };
-        const { insertedId } = await this.db
-            .collection(collection)
-            .insertOne({ ...document, metadata });
-        return { status: 201, json: { ...document, _id: insertedId, metadata } }
-    },
-
-    async set (collection, { schema, where = {}, fields = {} }) {
-        const document = await this.db
-            .collection(collection)
-            .findOne({ ...where, 'metadata.deleted': false });
-        if (!document) return { status: 404, text: 'NOT FOUND' };
-        const { metadata, _id, ...rest } = document;
-        const isValid = await ajv.validate(schema, { ...rest, ...fields });
-        if (!isValid) return { status: 400, json: ajv.errors };
-        await this.db
-            .collection(collection)
-            .updateOne(
-                { _id }, 
-                { $set: { 
-                    ...fields, metadata: { deleted: false, updatedAt: Date() } 
-                } }
-            );
-        return { status: 200, json: { ...document, ...fields } }
-    },
-
-    async softDelete (collection, { where = {}, exclude }) {
-        const document = await this.db
-            .collection(collection)
-            .findOneAndUpdate(
-                { ...where, 'metadata.deleted': false },
-                { $set: { metadata: { deleted: true } } },
-                { returnOriginal: false, projection: parseProjection(exclude) }
-            );
-        return { status: 200, json: document }
-    },
-
-    async makeTransaction (callback) {
-        const session = await this.client
-            .startSession()
-            .withTransaction(callback);
-        return session.endSession()
+            get (collection, { where = {}, exclude }) {
+                return collection.findOne(
+                    { ...where, deleted: false }, 
+                    parseProjection(exclude)
+                )
+            },
+            
+            set (collection, { where = {}, fields = {}, exclude }) {
+                return collection.findOneAndUpdate(
+                    { ...where, deleted: false },
+                    { 
+                        $set: { ...fields, deleted: false, updatedAt: Date() }, 
+                        $setOnInsert: { createdAt: Date() }
+                    },
+                    { upsert: true, projection: parseProjection(exclude), returnOriginal: false }
+                )
+            },
+        
+            softDelete (collection, { where = {}, exclude }) {
+                return collection.findOneAndUpdate(
+                    { ...where, deleted: false },
+                    { $set: { deleted: true } },
+                    { returnOriginal: false, projection: parseProjection(exclude) }
+                )
+            },
+        
+            restore () { // TODO
+        
+            }
+        })
     }
 })
