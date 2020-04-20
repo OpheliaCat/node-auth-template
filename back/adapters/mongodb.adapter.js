@@ -11,7 +11,7 @@ const parseProjection = exclude => {
     return outputFormat
 }
 
-module.exports = () => Object.freeze({
+module.exports = Object.freeze({
     
     async connect () {
         client = await MongoClient.connect(
@@ -21,19 +21,18 @@ module.exports = () => Object.freeze({
         db = client.db()
     },
 
-    async initIndexes (collectionName) {
-        return db
-            .collection(collectionName)
-            .createIndexes([{ 
-                key: { deleted: 1 }, 
-                name: 'deleted'  
-            }])
-    },
-
-    getCollection (name) {
+    moveTo (name) {
         const collection = db.collection(name);
         
         return Object.freeze({
+            async initIndexes () {
+                return collection
+                    .createIndexes([{ 
+                        key: { deleted: 1 }, 
+                        name: 'deleted'  
+                    }])
+            },
+            
             async list ({ limit, offset, sort, exclude, where }) {
                 const pipeline = [
                     { $match: { deleted: false }},
