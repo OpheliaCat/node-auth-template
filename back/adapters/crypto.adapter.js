@@ -11,14 +11,6 @@ module.exports = {
         return `${hash}.${salt}`
     },
 
-    comparePassword: (password, passwordHash) => {
-        const [hash, salt] = passwordHash.split('.');
-        const testHash = crypto
-            .pbkdf2Sync(password, salt, 1000, 64, 'hex')
-            .toString('hex');
-        return hash === testHash
-    },
-
     signJWT: identity => {
         const b64 = json => new Buffer(JSON.stringify(json)).toString('base64');
         const header = b64({ alg: "HS256", type: "jwt" });
@@ -28,7 +20,15 @@ module.exports = {
             .toString('base64');
         return `${header}.${payload}.${signature}`
     },
-    
+
+    comparePassword: (password, passwordHash) => {
+        const [hash, salt] = passwordHash.split('.');
+        const testHash = crypto
+            .pbkdf2Sync(password, salt, 1000, 64, 'hex')
+            .toString('hex');
+        return hash === testHash
+    },
+
     verifyJWT: token => {
         const [ header, payload, signature ] = token
             .replace('Bearer', '')

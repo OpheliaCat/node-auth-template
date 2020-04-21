@@ -1,6 +1,5 @@
-const { Router } = require('express');
 const expressAdapter = require('./adapters/express.adapter');
-const mongodbAdapter = require('./adapters/mongodb.adapter');
+const { moveTo } = require('./adapters/mongodb.adapter');
 
 
 const testJSON = [
@@ -11,36 +10,17 @@ const testJSON = [
     { id: 5, realName: 'Baskova', nickname: null }
 ]
 
-module.exports = expressAdapter(Router())
-    .addRoute(
-        { method: 'GET', path: '/test' },
-        ({ query }) => ({ json: testJSON.concat(query )})
-    )
-    .addRoute(
-        { method: 'POST', path: '/users' },
-        async ({ body }) => ({ 
-            status: 201, 
-            json: await mongodbAdapter()
-                .getCollection('users')
-                .set({ fields: body }) 
-        })
-    )
-    .addRoute(
-        { method: 'DELETE', path: '/users/:id' },
-        async ({ params: { id } }) => ({ 
-            status: 200, 
-            json: await mongodbAdapter()
-                .getCollection('users')
-                .softDelete({ id })
-        })
-    )
-    .addRoute(
-        { method: 'GET', path: '/users' },
-        async ({ query: { fields} }) => ({
-            status: 200,
-            json: await mongodbAdapter()
-                .getCollection('users')
-                .list({ exclude: fields })
-        })
-    )
+module.exports = expressAdapter
+    .get('/users', async ({ query }) => ({
+        status: 200,
+        json: await moveTo('users').list(query)
+    }))
+    .post('/users', async ({ query, body }) => ({
+        status: 201, 
+        json: await moveTo('users').set({ fields: body, ...query }) 
+    }))
+    .delete('/users', async ({ params: { id } }) => ({
+        status: 200,
+        json: await moveTo('users').softDelete({ id })
+    }))
     .router
